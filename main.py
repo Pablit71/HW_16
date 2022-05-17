@@ -267,7 +267,7 @@ def order_action(oid):
             db.session.add_all(order)
 
 
-@app.route('/delete/<lists>/<oid>', methods=['DELETE'])
+@app.route('/delete/<lists>/<oid>', methods=['GET', 'DELETE'])
 def delete_list(lists, oid):
     if lists == offers:
         offer = Offer.query.get(oid)
@@ -281,7 +281,7 @@ def delete_list(lists, oid):
         user = User.query.get(oid)
         db.session.delete(user)
         db.session.commit()
-
+    return ''
 
 if __name__ == '__main__':
     main()
