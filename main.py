@@ -105,6 +105,7 @@ def offers_in():
                 "order_id": offer.order_id,
                 "executor_id": offer.executor_id
             })
+        return jsonify(data), 201
     elif request.method == 'POST':
         data = request.get_json()
         offer_new = Offer(
@@ -115,7 +116,7 @@ def offers_in():
         with db.session.begin():
             db.session.add(offer_new)
 
-    return jsonify(data)
+        return '', 200
 
 
 @app.route('/users', methods=['GET', 'POST'])
@@ -134,7 +135,7 @@ def users_in():
             })
     elif request.method == 'POST':
         data = request.get_json()
-        user_new = Order(
+        user_new = User(
             id=data['id'],
             first_name=data['first_name'],
             last_name=data['last_name'],
@@ -145,10 +146,11 @@ def users_in():
         )
         with db.session.begin():
             db.session.add(user_new)
-    return jsonify(data)
+
+        return '', 200
 
 
-@app.route('/orders', methods=['GET', 'POST'])
+@app.route('/orders/', methods=['GET', 'POST'])
 def orders_in():
     data = []
     if request.method == 'GET':
@@ -164,24 +166,25 @@ def orders_in():
                 "customer_id": order.customer_id,
                 "executor_id": order.executor_id,
             })
+        return jsonify(data)
+
     elif request.method == 'POST':
         data = request.get_json()
-        order_new = Offer(
-            Order(
-                id=data['id'],
-                name=data['name'],
-                description=data['description'],
-                start_date=data['start_date'],
-                end_date=data['end_date'],
-                address=data['address'],
-                price=data['price'],
-                customer_id=data['customer_id'],
-                executor_id=data['executor_id']
-            )
+        order_new = Order(
+            name=data['name'],
+            description=data['description'],
+            start_date=data['start_date'],
+            end_date=data['end_date'],
+            address=data['address'],
+            price=data['price'],
+            customer_id=data['customer_id'],
+            executor_id=data['executor_id']
         )
+
         with db.session.begin():
             db.session.add_all(order_new)
-    return jsonify(data)
+
+        return '', 200
 
 
 @app.route('/offers/<int:oid>', methods=['GET', 'PUT'])
@@ -193,16 +196,16 @@ def offers_action(oid):
             "order_id": offer.order_id,
             "executor_id": offer.executor_id
         }
-        return jsonify(data)
+        return jsonify(data), 201
     elif request.method == 'PUT':
         data = request.get_json()
         offer = Offer.query.get(oid)
         offer.id = data['id']
         offer.order_id = data['order_id']
         offer.executor_id = data['executor_id']
-
         with db.session.begin():
             db.session.add_all(offer)
+        return '', 203
 
 
 @app.route('/users/<int:uid>', methods=['GET', 'PUT'])
@@ -218,7 +221,7 @@ def users_action(uid):
             "role": user.role,
             "phone": user.phone
         }
-        return jsonify(data)
+        return jsonify(data), 201
     elif request.method == 'PUT':
         data = request.get_json()
         user = User.query.get(uid)
@@ -232,6 +235,7 @@ def users_action(uid):
 
         with db.session.begin():
             db.session.add_all(user)
+        return '', 204
 
 
 @app.route('/orders/<int:oid>', methods=['GET', 'PUT'])
@@ -249,22 +253,22 @@ def order_action(oid):
             "customer_id": order.customer_id,
             "executor_id": order.executor_id,
         }
-        return jsonify(data)
+        return jsonify(data), 201
     elif request.method == 'PUT':
         data = request.get_json()
         order = Order.query.get(oid)
-        order.id = data['id'],
-        order.name = data['name'],
-        order.description = data['description'],
-        order.start_date = data['start_date'],
-        order.end_date = data['end_date'],
-        order.address = data['address'],
-        order.price = data['price'],
-        order.customer_id = data['customer_id'],
+        order.id = data['id']
+        order.name = data['name']
+        order.description = data['description']
+        order.start_date = data['start_date']
+        order.end_date = data['end_date']
+        order.address = data['address']
+        order.price = data['price']
+        order.customer_id = data['customer_id']
         order.executor_id = data['executor_id']
-
         with db.session.begin():
             db.session.add_all(order)
+        return '', 203
 
 
 @app.route('/delete/<lists>/<oid>', methods=['GET', 'DELETE'])
@@ -281,7 +285,8 @@ def delete_list(lists, oid):
         user = User.query.get(oid)
         db.session.delete(user)
         db.session.commit()
-    return ''
+    return '', 204
+
 
 if __name__ == '__main__':
     main()
