@@ -2,15 +2,14 @@ import json
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, request, jsonify
 from data import users, offers, orders
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-engine = create_engine('sqlite:///:memory:')
+
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSON_AS_ASCII'] = False
 db = SQLAlchemy(app)
-Session = sessionmaker(engine)
+
 
 class User(db.Model):
     __tablename__ = 'user'
@@ -46,7 +45,7 @@ class Offer(db.Model):
 def main():
     db.create_all()
     request_data()
-    app.run()
+    app.run(debug=True)
 
 
 def request_data():
@@ -63,9 +62,9 @@ def request_data():
                 phone=user['phone'],
             )
         )
-        with Session() as session:
-            with db.session.begin():
-                session.add(users_new)
+        db.session.add_all(users_new)
+        db.session.commit()
+        db.session.close()
 
     offers_new = []
     for offer in offers:
@@ -76,9 +75,9 @@ def request_data():
                 executor_id=offer['executor_id']
             )
         )
-        with Session() as session:
-            with db.session.begin():
-                session.add(offers_new)
+        db.session.add_all(offers_new)
+        db.session.commit()
+        db.session.close()
 
     order_new = []
     for order in orders:
@@ -95,9 +94,9 @@ def request_data():
                 executor_id=order['executor_id'],
             )
         )
-        with Session() as session:
-            with db.session.begin():
-                session.add(order_new)
+        db.session.add_all(order_new)
+        db.session.commit()
+        db.session.close()
 
 
 @app.route('/offers', methods=['GET', 'POST'])
@@ -155,7 +154,7 @@ def users_in():
         db.session.commit()
         db.session.close()
 
-        return "", 200
+        return "", 201
 
 
 @app.route('/orders/', methods=['GET', 'POST'])
