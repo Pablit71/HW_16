@@ -2,13 +2,15 @@ import json
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, request, jsonify
 from data import users, offers, orders
-
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+engine = create_engine('sqlite:///:memory:')
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSON_AS_ASCII'] = False
 db = SQLAlchemy(app)
-
+Session = sessionmaker(engine)
 
 class User(db.Model):
     __tablename__ = 'user'
@@ -44,7 +46,7 @@ class Offer(db.Model):
 def main():
     db.create_all()
     request_data()
-    app.run(debug=True)
+    app.run()
 
 
 def request_data():
@@ -61,8 +63,9 @@ def request_data():
                 phone=user['phone'],
             )
         )
-        with db.session.begin():
-            db.session.add_all(users_new)
+        with Session() as session:
+            with db.session.begin():
+                session.add(users_new)
 
     offers_new = []
     for offer in offers:
@@ -73,8 +76,9 @@ def request_data():
                 executor_id=offer['executor_id']
             )
         )
-        with db.session.begin():
-            db.session.add_all(offers_new)
+        with Session() as session:
+            with db.session.begin():
+                session.add(offers_new)
 
     order_new = []
     for order in orders:
@@ -91,8 +95,9 @@ def request_data():
                 executor_id=order['executor_id'],
             )
         )
-        with db.session.begin():
-            db.session.add_all(order_new)
+        with Session() as session:
+            with db.session.begin():
+                session.add(order_new)
 
 
 @app.route('/offers', methods=['GET', 'POST'])
@@ -113,10 +118,11 @@ def offers_in():
             order_id=data['order_id'],
             executor_id=data['executor_id']
         )
-        with db.session.begin():
-            db.session.add(offer_new)
+        db.session.add(offer_new)
+        db.session.commit()
+        db.session.close()
 
-        return '', 200
+        return "", 200
 
 
 @app.route('/users', methods=['GET', 'POST'])
@@ -133,6 +139,7 @@ def users_in():
                 "role": user.role,
                 "phone": user.phone
             })
+        return jsonify(data), 200
     elif request.method == 'POST':
         data = request.get_json()
         user_new = User(
@@ -144,10 +151,11 @@ def users_in():
             role=data['role'],
             phone=data['phone'],
         )
-        with db.session.begin():
-            db.session.add(user_new)
+        db.session.add(user_new)
+        db.session.commit()
+        db.session.close()
 
-        return '', 200
+        return "", 200
 
 
 @app.route('/orders/', methods=['GET', 'POST'])
@@ -181,10 +189,11 @@ def orders_in():
             executor_id=data['executor_id']
         )
 
-        with db.session.begin():
-            db.session.add_all(order_new)
+        db.session.add(order_new)
+        db.session.commit()
+        db.session.close()
 
-        return '', 200
+        return jsonify(data), 200
 
 
 @app.route('/offers/<int:oid>', methods=['GET', 'PUT'])
@@ -203,9 +212,10 @@ def offers_action(oid):
         offer.id = data['id']
         offer.order_id = data['order_id']
         offer.executor_id = data['executor_id']
-        with db.session.begin():
-            db.session.add_all(offer)
-        return '', 203
+        db.session.add(offer)
+        db.session.commit()
+        db.session.close()
+        return "", 204
 
 
 @app.route('/users/<int:uid>', methods=['GET', 'PUT'])
@@ -233,9 +243,10 @@ def users_action(uid):
         user.role = data['role']
         user.phone = data['phone']
 
-        with db.session.begin():
-            db.session.add_all(user)
-        return '', 204
+        db.session.add(user)
+        db.session.commit()
+        db.session.close()
+        return "", 204
 
 
 @app.route('/orders/<int:oid>', methods=['GET', 'PUT'])
@@ -266,9 +277,10 @@ def order_action(oid):
         order.price = data['price']
         order.customer_id = data['customer_id']
         order.executor_id = data['executor_id']
-        with db.session.begin():
-            db.session.add_all(order)
-        return '', 203
+        db.session.add(order)
+        db.session.commit()
+        db.session.close()
+        return "", 204
 
 
 @app.route('/delete/<lists>/<oid>', methods=['GET', 'DELETE'])
