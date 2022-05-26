@@ -3,7 +3,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, request, jsonify
 from data import users, offers, orders
 
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -282,20 +281,29 @@ def order_action(oid):
         return "", 204
 
 
-@app.route('/delete/<lists>/<oid>', methods=['GET', 'DELETE'])
-def delete_list(lists, oid):
-    if lists == offers:
-        offer = Offer.query.get(oid)
-        db.session.delete(offer)
-        db.session.commit()
-    elif lists == orders:
-        order = Order.query.get(oid)
-        db.session.delete(order)
-        db.session.commit()
-    elif lists == users:
-        user = User.query.get(oid)
-        db.session.delete(user)
-        db.session.commit()
+@app.route('/delete/offers/<oid>', methods=['GET', 'DELETE'])
+def delete_offers(oid):
+    offer = Offer.query.get(oid)
+    db.session.delete(offer)
+    db.session.commit()
+    return '', 204
+
+
+@app.route('/delete/users/<oid>', methods=['GET', 'DELETE'])
+def delete_users(oid):
+    user = User.query.get(oid)
+    db.session.delete(user)
+    db.session.commit()
+
+    return '', 204
+
+
+@app.route('/delete/orders/<oid>', methods=['GET', 'DELETE'])
+def delete_orders(oid):
+    order = Order.query.get(oid)
+    db.session.delete(order)
+    db.session.commit()
+
     return '', 204
 
 
